@@ -1,5 +1,22 @@
 <?php
 /**
+ * Return an array of js options
+ *
+ * @return array
+ */
+function wabs_js_options() {
+
+	// todo: get_option( $option );
+	return apply_filters( 'wabs_js_options', array( 
+				          'behavior'      => 'toggle',
+				          'zIndex'		  => 800,
+		                  'speedIn'       => 600,
+		                  'speedOut'      => 400,
+		                  'daysHidden'    => 15, 
+		                  'daysReminder'  => 90,
+		                  'debug'         => false ) );
+}
+/**
  * Return an array of built in available icons
  *
  * @return array

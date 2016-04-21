@@ -2,7 +2,7 @@
  * WABS Styling
  */
 
- .wabs_bar {
+.wabs_bar {
     position: absolute;
     backface-visibility: hidden;
     left: 0;
@@ -11,7 +11,7 @@
     min-height: 38px;
     font-size: 16px;
     text-align: center;
-    z-index: 1;
+    z-index: 100;
     -webkit-font-smoothing: antialiased
 }
 
@@ -21,7 +21,6 @@
     padding: 9px 20px;
     text-align: center
 }
-
 .wabs_col-0,
 .wabs_col-2 {
     display: table-cell;
@@ -33,7 +32,8 @@
     display: inline-table;
     vertical-align: middle;
     text-align: center;
-    min-width: 240px
+    min-width: 240px;
+    max-width: 97%
 }
 
 .wabs_message {
@@ -50,26 +50,29 @@
     min-width: 120px
 }
 
+.wabs_cta {
+    display: table-cell;
+    vertical-align: middle;
+    padding: 0 .53em
+}
+
 .wabs_with_cta .wabs_message p {
     text-align: left
 }
-
+.wabs_without_action.wabs_without_cta .wabs_message p,
 .wabs_without_cta .wabs_message p {
     text-align: center
-}
-
-.wabs_without_cta .wabs_cta {
-    display: none
 }
 
 .wabs_button {
     border: 1px solid;
     margin: .1em 0;
-    padding: .1em .72em .23em;
+    padding: .22em .72em .23em;
     border-radius: .19em;
     font-size: 1.1em;
     line-height: 1;
-    display: inline-block
+    display: inline-block;
+    white-space: pre;
 }
 
 .wabs_close_bar {
@@ -88,10 +91,46 @@
     width: 100%;
     clear: both;
     height: 0;
-    overflow: hidden;
+    overflow: hidden
 }
 
-@media only screen and (-webkit-min-device-pixel-ratio : 1.5), only screen and (min-device-pixel-ratio : 1.5) {
+.wabs_without_action .wabs_col-0,
+.wabs_without_action .wabs_col-2,
+.wabs_without_cta .wabs_cta {
+    display: none
+}
 
+@media (max-width: 960px) AND (min-width: 641px) {
+    .wabs_col-0 {
+        display:none
+    }
+    .wabs_with_cta .wabs_message {
+        width: 82%
+    }
+    .wabs_inner.wabs_col-1 {
+        max-width: 86%
+    }
+    
+    :not(.without_action) .wabs_message p,
+    .wabs_cta
+    {
+        text-align: left
+    }
+    
 
+}
+@media (max-width: 640px) {
+    .wabs_col-0 {
+        display:none
+    }
+    .wabs_col-1,
+    .wabs_message {
+        max-width: 100%
+    }
+    .wabs_cta,
+    :not(.without_action) .wabs_message p,
+    .wabs_with_cta .wabs_message p
+    {
+        text-align: left
+    }
 }

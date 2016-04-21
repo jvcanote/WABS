@@ -64,7 +64,9 @@
 		function createBanner(){
 
 			$('html').append( WABS_setting.WABS_HTML );	
-			$('body').prepend( WABS_setting.WABS_topSpacer );	
+			$('body').prepend( WABS_setting.WABS_topSpacer );
+
+			$(WABS_setting.WABS_ID).css( 'zIndex', opts.zIndex );
 
 			HtmlBackground = bannerBackgroundColor();
 
@@ -101,7 +103,10 @@
 				HtmlMargin = parseFloat($('html').css('margin-top'));
 				bannerDistance = String( bannerHeight - HtmlMargin );
 
+				$('.wabs_top_spacer').height( bannerHeight ).hide();
 				$(WABS_setting.WABS_ID).transition({ y: "-" + bannerHeight + 'px', duration: 1 }).parents('html').transition({ y: bannerDistance + 'px', duration: 1  });
+			}).on('load', function(){
+				$(window).trigger('resize');
 			});
 		}
 		function showBanner(){
@@ -152,9 +157,9 @@
 
 				// logBannerState({toggleBanner:'in'});
 
+				$('html').css({transform:'', background: '' });
 				$('.wabs_top_spacer').height( bannerHeight ).show();
 				$(WABS_setting.WABS_ID).stop().css('transform','translate(0px, -100%)');
-				$('html').css({transform:'', background: '' });
 
 			} else if( isBannerState('out') && state == 'in'  ){
 
@@ -162,9 +167,9 @@
 
 				// logBannerState({toggleBanner:'out'});
 
-				$('.wabs_top_spacer').hide();
-				$(WABS_setting.WABS_ID).stop().transition({ y: "-" + bannerHeight + 'px', duration: 0 });
 				$('html').css( 'background', HtmlBackground ).transition({ y: bannerDistance + 'px', duration: 0 });
+				$('.wabs_top_spacer').height( bannerHeight ).hide();
+				$(WABS_setting.WABS_ID).stop().transition({ y: "-" + bannerHeight + 'px', duration: 0 });
 			}
 		}
 		function closeBanner(){
@@ -172,7 +177,7 @@
 			$(WABS_setting.WABS_ID).stop().removeClass('shown');
 			$('html').transition({ y: '0px', easing: 'snap', duration: opts.speedOut }, function(){ $('html').css('transform',''); $(WABS_setting.WABS_ID).fadeOut(); });
 			
-			if(!opts.behavior=='toggle'){
+			if(opts.behavior=='close'){
 				setCookie( cookieName,'true', opts.daysHidden );
 			}
 		}
@@ -194,7 +199,7 @@
 			}
 		}
 		// bannerState = ['live'];
-		if( typeof getCookie( cookieName) == 'undefined' && typeof getCookie('wabs-saved') == 'undefined'){ // Show if debug. Show if iPhone/iPad in Mobile Safari & don't have cookies already.			
+		if( typeof getCookie( cookieName) == 'undefined' || opts.behavior=='toggle' ){ // Show if debug. Show if iPhone/iPad in Mobile Safari & don't have cookies already.			
 			bannerState = ['live'];
 
 			// logBannerState({init:'noCookie'});

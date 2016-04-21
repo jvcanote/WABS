@@ -113,6 +113,7 @@ class WABS
 
     private static $_active = null;
     private static $_defaults = array(  'behavior'      => 'toggle',
+                                        'zIndex'        => 100,
                                         'speedIn'       => 600,
                                         'speedOut'      => 400,
                                         'daysHidden'    => 15, 
@@ -128,7 +129,6 @@ class WABS
     private function __construct ( $file = '', $version = '1.0.0' ) {
 
         // Load plugin environment variables
-
         self::$file    = $file;
         self::$version = $version;
         self::$plugin_dir = dirname( self::$file );
@@ -137,6 +137,7 @@ class WABS
         register_activation_hook( self::$file, array( $this, 'install' ) );
 
         // Setup action bar
+        // todo: check the cookie and bail early
         add_action( 'wp', array( $this, 'setup_action_bar' ), 10 );
 
         // Load frontend JS & CSS
@@ -167,13 +168,13 @@ class WABS
         $defaults = array(
             'unique_id'         =>  uniqid(),
             'active'            =>  'n',
-            'message'           =>  NULL,
             'scheduled'         =>  'n',
             'start_date'        =>  '0',
             'end_date'          =>  current_time('timestamp') + DAY_IN_SECONDS,
             'cta_class'         =>  'without_cta',
-            'link'              =>  NULL,
             'target'            =>  '_self',
+            'link'              =>  NULL,
+            'message'           =>  NULL,
             'button_text'       =>  NULL,
             'action_symbol'     =>  'delta',
             'text_color'        =>  '#FFFFFF',
@@ -198,24 +199,29 @@ class WABS
         
         if( ( $WABS['active'] && ! $scheduled ) || ( $WABS['active'] && $scheduled && $in_range ) ) {
            
-            $html = '<div id=\'%1$s%2$s\' class=\'%1$sbar %1$s%3$s\' style=\'position:absolute;transform:translate(0px,-100%%);\'> <div class=\'%1$scontainer\'> <div class=\'%1$scol-0\'>&nbsp;</div> <div class=\'%1$sinner %1$scol-1\'> <div class=\'%1$smessage\'> <p> %4$s </p> </div> <div class=\'%1$scta\'> <a class=\'%1$sbutton\' href=\'%5$s\' target=\'%6$s\'>%7$s</a> </div> </div> <div class=\'%1$scol-2\'> <a href=\'javascript:void(0);\' id=\'%1$sclose_bar_%2$s\' class=\'%1$sclose_bar\'> %8$s </a> </div> </div> </div>';
-            $output = sprintf( $html, self::TOKEN, esc_attr( $unique_id ), esc_attr( $WABS['cta_class'] ), self::_sanitize_js( $WABS['message'] ), esc_url( $WABS['link'] ), esc_attr( $WABS['target'] ), self::_sanitize_js( $WABS['button_text'] ), self::_action_symbol_type_js( $WABS['action_symbol'] ) );
+            $html = '<div id=\'%1$s%2$s\' class=\'%1$sbar %1$s%3$s %1$s%9$s\' style=\'position:absolute;transform:translate(0px,-100%%);\'> <div class=\'%1$scontainer\'> <div class=\'%1$scol-0\'>&nbsp;</div> <div class=\'%1$sinner %1$scol-1\'> <div class=\'%1$smessage\'> <p> %4$s </p> </div> <div class=\'%1$scta\'> <a class=\'%1$sbutton\' href=\'%5$s\' target=\'%6$s\'>%7$s</a> </div> </div> <div class=\'%1$scol-2\'> <a href=\'javascript:void(0);\' id=\'%1$sclose_bar_%2$s\' class=\'%1$sclose_bar\'> %8$s </a> </div> </div> </div>';
+            $output = sprintf( $html, self::TOKEN, esc_attr( $unique_id ), esc_attr( $WABS['cta_class'] ), self::_sanitize_js( $WABS['message'] ), esc_url( $WABS['link'] ), esc_attr( $WABS['target'] ), self::_sanitize_js( $WABS['button_text'] ), self::_action_symbol_js( $WABS['action_symbol'] ), sanitize_html_class( $WABS['action_symbol'], "none" ) );
         
         } else { return false; }
 
-        $WABS = array_map( 'wp_kses_data', $WABS );
-
-        self::$id = sprintf( "#%s%s", self::TOKEN, esc_attr( $unique_id ) );
-        self::$html = $output;
-        self::$top_spacer = self::_top_spacer($post_id);
-        self::$options = self::$_defaults;
-
+        // $WABS = array_map( 'wp_kses_data', $WABS );
         foreach ( $WABS as $property => $value ) {
             self::${"$property"} = $value;
         }
+
+        self::$id = sprintf( "#%s%s", self::TOKEN, esc_attr( $unique_id ) );
+        self::$html = $output;
+        self::$action_symbol = self::_action_symbol();
+        self::$top_spacer = self::_top_spacer($unique_id);
+        self::$options = self::_js_options();
+        self::$options['behavior'] = ( is_numeric( stripos( $WABS['action_symbol'], 'vector' ) ) ) ? 'close' : 'toggle' ;
+
         return true;
 
     }
+    /**
+     * The fast way.
+     */
     private static function _get_meta_value( $id = 0, $key='' ){
         global $wpdb;
         return maybe_unserialize( 
@@ -235,17 +241,20 @@ class WABS
         $B = hexdec(substr($hex, 4, 2));
         return (($R * 299) + ($G * 587) + ($B * 114)) / 1000;
     }
-    private static function _top_spacer( $post_id ) {
-        return _wabs_top_spacer( $post_id );
+    private static function _js_options( $defaults ) {
+        return _wabs_js_options( ( $defaults ) ? $defaults :  self::$_defaults );
     }
-    private static function action_symbol_type( $type = null ) {
+    private static function _action_symbol( $type = null ) {
         return _wabs_action_symbol( ($type ) ? $type : self::$action_symbol );
     }
-    private static function _action_symbol_type_js( $type = null ) {
-        return _wabs_action_symbol( ($type ) ? $type : self::$action_symbol );
+    private static function _top_spacer( $unique_id ) {
+        return _wabs_top_spacer( $unique_id );
     }
-    private static function _sanitize_js($arg) {
-        return wp_slash( wp_kses_data( $arg ) );
+    private static function _action_symbol_js( $type = null ) {
+        return _wabs_action_symbol( ( $type ) ? $type : self::$action_symbol );
+    }
+    private static function _sanitize_js( $arg = null ) {
+        return $arg;
     }
     private static function _check_in_range($start_date,$end_date,$date_now) {
       return (($date_now >= $start_date) && ($date_now <= $end_date));
@@ -255,11 +264,11 @@ class WABS
     /* PUBLIC FUNCTIONS */
 
     public function setup_action_bar(){
-
-        self::$_active = ( is_null( self::$_active ) ) ? self::_setup_action_bar() : self::$_active ;
-
+        // todo: check the cookie
+        $active = ( is_null( self::$_active ) ) ? self::_setup_action_bar() : self::$_active ;
+        // Plugins to filter to disable 'wabs_active_action_bar'
+        self::$_active = apply_filters( 'wabs_active_action_bar', $active );
     }
-
     /**
      * Enqeue CSS with custom color values
      *
@@ -269,6 +278,7 @@ class WABS
      */
     public function enqueue_styles(){
 
+        // should we filter here?
         if( self::$_active ) {
 
             wp_register_style( self::PLUGIN . '-frontend', esc_url( self::$plugin_url ) . '/css/' . self::PLUGIN . '.css', array(), self::$version );
@@ -303,8 +313,7 @@ class WABS
 
     public static function enqueue_scripts(){
 
-        global $post;
-
+        // should we filter here?
         if( self::$_active ) {
 
             wp_enqueue_script( 'jquery-effects-core' );
@@ -327,7 +336,7 @@ class WABS
                     self::KEY . 'link'            => self::$link, 
                     self::KEY . 'target'          => self::$target, 
                     self::KEY . 'buttonText'      => self::$button_text, 
-                    self::KEY . 'actionSymbol'    => self::action_symbol_type(), 
+                    self::KEY . 'actionSymbol'    => self::_action_symbol(), 
                     self::KEY . 'textColor'       => self::$text_color,
                     self::KEY . 'actionColor'     => self::$action_color,  
                     self::KEY . 'backgroundColor' => self::$background_color, 
@@ -345,7 +354,7 @@ class WABS
      * @return  void
      */
     public function admin_enqueue_styles ( $hook = '' ) {
-        wp_register_style( self::PLUGIN . '-admin', esc_url( self::$plugin_url ) . '/css/admin.css', array(), self::$version );
+        wp_register_style( self::PLUGIN . '-admin', esc_url( self::$plugin_url ) . '/css/' . self::PLUGIN . '-admin.css', array(), self::$version );
         wp_enqueue_style(  self::PLUGIN . '-admin' );
     } // End admin_enqueue_styles ()
 
@@ -356,7 +365,7 @@ class WABS
      * @return  void
      */
     public function admin_enqueue_scripts ( $hook = '' ) {
-        wp_register_script( self::PLUGIN . '-admin', esc_url( self::$plugin_url ) . '/js/admin.js', array( 'jquery' ), self::$version );
+        wp_register_script( self::PLUGIN . '-admin', esc_url( self::$plugin_url ) . '/js/' . self::PLUGIN . '-admin.js', array( 'jquery' ), self::$version );
         wp_enqueue_script(  self::PLUGIN . '-admin' );
     } // End admin_enqueue_scripts ()
 

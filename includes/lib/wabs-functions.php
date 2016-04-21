@@ -1,5 +1,14 @@
 <?php
 /**
+ * Merge js options with defaults 
+ *
+ * @param  string $defaults
+ * @return array js options
+ */
+function _wabs_js_options( $defaults = array() ) {
+	return wp_parse_args( wabs_js_options(), $defaults );
+}
+/**
  * Get an action symbol by type
  *
  * @param  string $type
@@ -12,7 +21,7 @@ function _wabs_action_symbol( $type = 'none' ) {
     if ( isset( $map[$type] ) )
         return $map[$type];
 
-    return "";
+    return "without_action";
 
 }
 /**
@@ -21,9 +30,9 @@ function _wabs_action_symbol( $type = 'none' ) {
  * @param  string $type
  * @return string $class, or "" if not found.
  */
-function _wabs_top_spacer( $post_id = 0 ) {
+function _wabs_top_spacer( $unique_id = 0 ) {
 
-    $top_spacer = sprintf( '<div id=\'%1$stop_spacer_%2$d\' class=\'%1$stop_spacer\' />', WABS::TOKEN, $post_id );
+    $top_spacer = sprintf( '<div id=\'%1$stop_spacer_%2$d\' class=\'%1$stop_spacer\' />', WABS::TOKEN, $unique_id );
     
     return apply_filters( 'wabs_top_spacer', $top_spacer );
 

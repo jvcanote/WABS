@@ -9,20 +9,21 @@ function wabs_metaboxes( array $meta_boxes ) {
 	// Example of all available fields
 
 	$fields = array(
-
-		array( 
-			'id' => '_wabs_unique_id',  
-			'name' => 'Unique ID', 
-			'type' => 'text', 
-			'placeholder' => 'hyah_campaign_0416', 
-			'cols' => 3 ),
-		
 		array( 
 			'id' => '_wabs_active',  
 			'name' => 'Active', 
 			'type' => 'checkbox', 
 			'value' => 'y', 
 			'cols' => 3 ),
+
+		array( 
+			'id' => '_wabs_unique_id',  
+			'name' => 'Unique ID', 
+			'type' => 'text', 
+			'default' => 'woof_' . current_time( 'Ymd' ), 
+			'placeholder' => 'campaign_0416', 
+			'cols' => 3 ),
+		
 
 		array( 
 			'id' => '_wabs_background_color', 
@@ -74,7 +75,7 @@ function wabs_metaboxes( array $meta_boxes ) {
 			'class' => 'hidden', 
 			'name' => 'Hide Icon', 
 			'type' => 'radio', 
-			'options' => wabs_action_symbols() + array( 'none' => 'None' ),
+			'options' => wabs_action_symbols() + array( 'without_action' => 'None' ),
 		),
 
 		array( 
