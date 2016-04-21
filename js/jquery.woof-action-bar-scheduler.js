@@ -171,7 +171,10 @@
 			bannerState = [];
 			$(WABS_setting.WABS_ID).stop().removeClass('shown');
 			$('html').transition({ y: '0px', easing: 'snap', duration: opts.speedOut }, function(){ $('html').css('transform',''); $(WABS_setting.WABS_ID).fadeOut(); });
-			setCookie( cookieName,'true', opts.daysHidden );
+			
+			if(!opts.behavior=='toggle'){
+				setCookie( cookieName,'true', opts.daysHidden );
+			}
 		}
 		function setCookie(name,value,exdays){
 			var exdate = new Date();
