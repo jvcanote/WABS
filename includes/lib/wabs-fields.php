@@ -11,17 +11,27 @@ function wabs_metaboxes( array $meta_boxes ) {
 	$fields = array(
 		array( 
 			'id' => '_wabs_active',  
-			'name' => 'Active', 
+			'name' => 'Status', 
 			'type' => 'checkbox', 
-			'value' => 'y', 
-			'cols' => 3 ),
+			'value' => 'Active', 
+			'cols' => 2 ),
+
+		array( 
+			'id' => '_wabs_global',  
+			'name' => 'Extend Display', 
+			// 'desc' => __('Show this action bar everywhere.','wabs'),
+			'type' => 'checkbox', 
+			'value' => 'Global', 
+			'save_callback' =>
+				array( WABS(), 'save_global_id' ),
+			'cols' => 2 ),
 
 		array( 
 			'id' => '_wabs_unique_id',  
 			'name' => 'Unique ID', 
-			'type' => 'text', 
-			'default' => 'woof_' . current_time( 'Ymd' ), 
-			'placeholder' => 'campaign_0416', 
+			'type' => 'text_small', 
+			'default' =>  wp_generate_password( 8 ),
+			'placeholder' => wp_generate_password( 8 ), 
 			'cols' => 3 ),
 		
 
@@ -30,14 +40,14 @@ function wabs_metaboxes( array $meta_boxes ) {
 			'name' => 'Background Color', 
 			'type' => 'colorpicker', 
 			'default' => '#1E73BE', 
-			'cols' => 3 ),
+			'cols' => 2 ),
 		
 		array( 
 			'id' => '_wabs_text_color', 
 			'name' => 'Text Color', 
 			'type' => 'colorpicker', 
 			'default' => '#FFFFFF', 
-			'cols' => 3 ),
+			'cols' => 2 ),
 		
 
 		array( 

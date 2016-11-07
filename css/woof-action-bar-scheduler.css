@@ -4,6 +4,7 @@
 
 .wabs_bar {
     position: absolute;
+    position: fixed !important;
     backface-visibility: hidden;
     left: 0;
     top: 0;
@@ -91,7 +92,8 @@
     width: 100%;
     clear: both;
     height: 0;
-    overflow: hidden
+    overflow: hidden;
+    background: transparent
 }
 
 .wabs_without_action .wabs_col-0,
