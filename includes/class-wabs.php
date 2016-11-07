@@ -95,6 +95,7 @@ class WABS
     protected static $css = "";
     protected static $html = "";
     protected static $active = "";
+    protected static $global = "";
     protected static $message = "";
     protected static $unique_id = "";
     protected static $scheduled = "";
@@ -108,6 +109,7 @@ class WABS
     protected static $text_color = "";
     protected static $action_color = "";
     protected static $background_color = "";
+    protected static $header_selector = "";
     protected static $top_spacer = "";
     protected static $options = array();
 
@@ -129,12 +131,12 @@ class WABS
     private function __construct ( $file = '', $version = '1.0.0' ) {
 
         // Load plugin environment variables
-        self::$file    = $file;
-        self::$version = $version;
-        self::$plugin_dir = dirname( self::$file );
-        self::$plugin_url = plugins_url( basename( dirname( self::$file ) ) );
+        SELF::$file    = $file;
+        SELF::$version = $version;
+        SELF::$plugin_dir = dirname( SELF::$file );
+        SELF::$plugin_url = plugins_url( basename( dirname( SELF::$file ) ) );
 
-        register_activation_hook( self::$file, array( $this, 'install' ) );
+        register_activation_hook( SELF::$file, array( $this, 'install' ) );
 
         // Setup action bar
         // todo: check the cookie and bail early
@@ -162,12 +164,33 @@ class WABS
         global $post;
 
         $blog_id = get_option( 'page_for_posts' );
+        
+        $global_id = get_option( SELF::TOKEN.'_global_id' );
 
-        $post_id = ( ! is_front_page() && is_home() ) ? $blog_id : $post->ID;
+        if( $global_id && '1' !== SELF::_get_meta_value( absint( $global_id ), SELF::META.'global' ) ) {
+
+            delete_option( SELF::TOKEN.'_global_id' );
+        }
+        elseif( $global_id && '1' === SELF::_get_meta_value( absint( $global_id ), SELF::META.'global' ) ) {
+            
+            $post_id = absint( $global_id );
+
+        } 
+        elseif( ! is_front_page() && is_home() ) {
+
+            $post_id = absint( $blog_id ); 
+
+        } 
+        else { 
+
+            $post_id = $post->ID;
+        }
+
 
         $defaults = array(
             'unique_id'         =>  uniqid(),
             'active'            =>  'n',
+            'global'            =>  'n',
             'scheduled'         =>  'n',
             'start_date'        =>  '0',
             'end_date'          =>  current_time('timestamp') + DAY_IN_SECONDS,
@@ -176,6 +199,7 @@ class WABS
             'link'              =>  NULL,
             'message'           =>  NULL,
             'button_text'       =>  NULL,
+            'header_selector'   =>  '',
             'action_symbol'     =>  'delta',
             'text_color'        =>  '#FFFFFF',
             'action_color'      =>  '#FFFFFF',
@@ -185,36 +209,41 @@ class WABS
         $output = "";
 
         foreach ( $defaults as $key => $value) {
-            $WABS[$key] = self::_get_meta_value( $post_id, self::META.$key );
+            $WABS[$key] = SELF::_get_meta_value( $post_id, SELF::META.$key );
         }
 
         $WABS = wp_parse_args( $WABS, $defaults );
+
         $has_cta = ( trim( $WABS['link'] ) && trim( $WABS['button_text'] ) );
-        $in_range = self::_check_in_range( $WABS['start_date'], $WABS['end_date'], current_time('timestamp') );
+
+        $in_range = SELF::_check_in_range( $WABS['start_date'], $WABS['end_date'], current_time('timestamp') );
+        
         $scheduled = bool_from_yn( $WABS['scheduled'] );
+        
         $unique_id = sprintf( "%s_post_%d", esc_attr( $WABS['unique_id'] ), $post_id );
 
         if( $has_cta ) { $WABS['cta_class'] = 'with_cta'; } else { $WABS['cta_class'] = 'without_cta'; }
-        if( self::_get_brightness( $WABS['background_color'] ) > 130 ) { $WABS['action_color'] = '#000000'; } else { $WABS['action_color'] = '#FFFFFF'; }
+        
+        if( SELF::_get_brightness( $WABS['background_color'] ) > 130 ) { $WABS['action_color'] = '#000000'; } else { $WABS['action_color'] = '#FFFFFF'; }
         
         if( ( $WABS['active'] && ! $scheduled ) || ( $WABS['active'] && $scheduled && $in_range ) ) {
            
             $html = '<div id=\'%1$s%2$s\' class=\'%1$sbar %1$s%3$s %1$s%9$s\' style=\'position:absolute;transform:translate(0px,-100%%);\'> <div class=\'%1$scontainer\'> <div class=\'%1$scol-0\'>&nbsp;</div> <div class=\'%1$sinner %1$scol-1\'> <div class=\'%1$smessage\'> <p> %4$s </p> </div> <div class=\'%1$scta\'> <a class=\'%1$sbutton\' href=\'%5$s\' target=\'%6$s\'>%7$s</a> </div> </div> <div class=\'%1$scol-2\'> <a href=\'javascript:void(0);\' id=\'%1$sclose_bar_%2$s\' class=\'%1$sclose_bar\'> %8$s </a> </div> </div> </div>';
-            $output = sprintf( $html, self::TOKEN, esc_attr( $unique_id ), esc_attr( $WABS['cta_class'] ), self::_sanitize_js( $WABS['message'] ), esc_url( $WABS['link'] ), esc_attr( $WABS['target'] ), self::_sanitize_js( $WABS['button_text'] ), self::_action_symbol_js( $WABS['action_symbol'] ), sanitize_html_class( $WABS['action_symbol'], "none" ) );
+            $output = sprintf( $html, SELF::TOKEN, esc_attr( $unique_id ), esc_attr( $WABS['cta_class'] ), SELF::_sanitize_js( $WABS['message'] ), esc_url( $WABS['link'] ), esc_attr( $WABS['target'] ), SELF::_sanitize_js( $WABS['button_text'] ), SELF::_action_symbol_js( $WABS['action_symbol'] ), sanitize_html_class( $WABS['action_symbol'], "none" ) );
         
         } else { return false; }
 
         // $WABS = array_map( 'wp_kses_data', $WABS );
         foreach ( $WABS as $property => $value ) {
-            self::${"$property"} = $value;
+            SELF::${"$property"} = $value;
         }
 
-        self::$id = sprintf( "#%s%s", self::TOKEN, esc_attr( $unique_id ) );
-        self::$html = $output;
-        self::$action_symbol = self::_action_symbol();
-        self::$top_spacer = self::_top_spacer($unique_id);
-        self::$options = self::_js_options();
-        self::$options['behavior'] = ( is_numeric( stripos( $WABS['action_symbol'], 'vector' ) ) ) ? 'close' : 'toggle' ;
+        SELF::$id = sprintf( "#%s%s", SELF::TOKEN, esc_attr( $unique_id ) );
+        SELF::$html = $output;
+        SELF::$action_symbol = SELF::_action_symbol();
+        SELF::$top_spacer = SELF::_top_spacer($unique_id);
+        SELF::$options = SELF::_js_options();
+        SELF::$options['behavior'] = ( is_numeric( stripos( $WABS['action_symbol'], 'vector' ) ) ) ? 'close' : 'toggle' ;
 
         return true;
 
@@ -241,17 +270,17 @@ class WABS
         $B = hexdec(substr($hex, 4, 2));
         return (($R * 299) + ($G * 587) + ($B * 114)) / 1000;
     }
-    private static function _js_options( $defaults ) {
-        return _wabs_js_options( ( $defaults ) ? $defaults :  self::$_defaults );
+    private static function _js_options( $defaults = NULL ) {
+        return _wabs_js_options( ( $defaults ) ? $defaults :  SELF::$_defaults );
     }
     private static function _action_symbol( $type = null ) {
-        return _wabs_action_symbol( ($type ) ? $type : self::$action_symbol );
+        return _wabs_action_symbol( ($type ) ? $type : SELF::$action_symbol );
     }
     private static function _top_spacer( $unique_id ) {
         return _wabs_top_spacer( $unique_id );
     }
     private static function _action_symbol_js( $type = null ) {
-        return _wabs_action_symbol( ( $type ) ? $type : self::$action_symbol );
+        return _wabs_action_symbol( ( $type ) ? $type : SELF::$action_symbol );
     }
     private static function _sanitize_js( $arg = null ) {
         return $arg;
@@ -263,11 +292,37 @@ class WABS
 
     /* PUBLIC FUNCTIONS */
 
+    public function save_global_id( $values, $post_id ){
+
+        // If we are not on a post edit screen
+        if ( ! $post_id )
+            return;
+
+        delete_post_meta( $post_id, SELF::META.'global' );
+
+        if( ( is_string( $values ) &&          '1' === $values ) 
+         || (  is_array( $values ) && in_array('1',    $values ) ) ) {
+
+            // CHECK OPTION
+            $global_id = get_option( SELF::TOKEN.'_global_id' );
+
+            if( $global_id ){
+                // Clear previous 
+                delete_post_meta( $global_id, SELF::META.'global' );
+            }
+            
+            add_post_meta( $post_id, SELF::META.'global', '1' );
+            update_option( SELF::TOKEN.'_global_id', $post_id );
+
+        }
+        return;
+    }
+
     public function setup_action_bar(){
         // todo: check the cookie
-        $active = ( is_null( self::$_active ) ) ? self::_setup_action_bar() : self::$_active ;
+        $active = ( is_null( SELF::$_active ) ) ? SELF::_setup_action_bar() : SELF::$_active ;
         // Plugins to filter to disable 'wabs_active_action_bar'
-        self::$_active = apply_filters( 'wabs_active_action_bar', $active );
+        SELF::$_active = apply_filters( 'wabs_active_action_bar', $active );
     }
     /**
      * Enqeue CSS with custom color values
@@ -279,15 +334,15 @@ class WABS
     public function enqueue_styles(){
 
         // should we filter here?
-        if( self::$_active ) {
+        if( SELF::$_active ) {
 
-            wp_register_style( self::PLUGIN . '-frontend', esc_url( self::$plugin_url ) . '/css/' . self::PLUGIN . '.css', array(), self::$version );
-            wp_enqueue_style(  self::PLUGIN . '-frontend' );
+            wp_register_style( SELF::PLUGIN . '-frontend', esc_url( SELF::$plugin_url ) . '/css/' . SELF::PLUGIN . '.css', array(), SELF::$version );
+            wp_enqueue_style(  SELF::PLUGIN . '-frontend' );
 
             // Custom color CSS
-            $text_color       = self::$text_color;
-            $action_color     = self::$action_color;
-            $background_color = self::$background_color;
+            $text_color       = SELF::$text_color;
+            $action_color     = SELF::$action_color;
+            $background_color = SELF::$background_color;
 
             $color_css = "
             .wabs_button {
@@ -307,41 +362,42 @@ class WABS
                 opacity: .4;
                 color: {$action_color}
             }";
-            wp_add_inline_style( self::PLUGIN . '-frontend', $color_css );
+            wp_add_inline_style( SELF::PLUGIN . '-frontend', $color_css );
         }
     }
 
     public static function enqueue_scripts(){
 
         // should we filter here?
-        if( self::$_active ) {
+        if( SELF::$_active ) {
 
             wp_enqueue_script( 'jquery-effects-core' );
-            wp_enqueue_script( 'jquery-transit',  esc_url( self::$plugin_url ) . '/js/jquery.transit.min.js', array( 'jquery' ), self::$version, true );
+            wp_enqueue_script( 'jquery-transit',  esc_url( SELF::$plugin_url ) . '/js/jquery.transit.min.js', array( 'jquery' ), SELF::$version, true );
             
-            wp_register_script( self::PLUGIN . '-frontend', esc_url( self::$plugin_url ) . '/js/jquery.' . self::PLUGIN . '.js', array( 'jquery' ), self::$version, true );
-            wp_enqueue_script(  self::PLUGIN . '-frontend' );
+            wp_register_script( SELF::PLUGIN . '-frontend', esc_url( SELF::$plugin_url ) . '/js/jquery.' . SELF::PLUGIN . '.js', array( 'jquery' ), SELF::$version, true );
+            wp_enqueue_script(  SELF::PLUGIN . '-frontend' );
 
-            wp_localize_script( self::PLUGIN . '-frontend', self::KEY . 'setting', 
+            wp_localize_script( SELF::PLUGIN . '-frontend', SELF::KEY . 'setting', 
                 array( 
-                    self::KEY . 'ID'              => self::$id,  
-                    self::KEY . 'HTML'            => self::$html, 
-                    self::KEY . 'active'          => self::$active,  
-                    self::KEY . 'message'         => self::$message,
-                    self::KEY . 'uniqueID'        => self::$unique_id, 
-                    self::KEY . 'scheduled'       => self::$scheduled, 
-                    self::KEY . 'startDate'       => self::$start_date, 
-                    self::KEY . 'endDate'         => self::$end_date, 
-                    self::KEY . 'ctaClass'        => self::$cta_class, 
-                    self::KEY . 'link'            => self::$link, 
-                    self::KEY . 'target'          => self::$target, 
-                    self::KEY . 'buttonText'      => self::$button_text, 
-                    self::KEY . 'actionSymbol'    => self::_action_symbol(), 
-                    self::KEY . 'textColor'       => self::$text_color,
-                    self::KEY . 'actionColor'     => self::$action_color,  
-                    self::KEY . 'backgroundColor' => self::$background_color, 
-                    self::KEY . 'topSpacer'       => self::$top_spacer, 
-                    self::KEY . 'options'         => self::$options,
+                    SELF::KEY . 'ID'              => SELF::$id,  
+                    SELF::KEY . 'HTML'            => SELF::$html, 
+                    SELF::KEY . 'active'          => SELF::$active,  
+                    SELF::KEY . 'message'         => SELF::$message,
+                    SELF::KEY . 'uniqueID'        => SELF::$unique_id, 
+                    SELF::KEY . 'scheduled'       => SELF::$scheduled, 
+                    SELF::KEY . 'startDate'       => SELF::$start_date, 
+                    SELF::KEY . 'endDate'         => SELF::$end_date, 
+                    SELF::KEY . 'ctaClass'        => SELF::$cta_class, 
+                    SELF::KEY . 'link'            => SELF::$link, 
+                    SELF::KEY . 'target'          => SELF::$target, 
+                    SELF::KEY . 'buttonText'      => SELF::$button_text, 
+                    SELF::KEY . 'actionSymbol'    => SELF::_action_symbol(), 
+                    SELF::KEY . 'textColor'       => SELF::$text_color,
+                    SELF::KEY . 'actionColor'     => SELF::$action_color,  
+                    SELF::KEY . 'backgroundColor' => SELF::$background_color, 
+                    SELF::KEY . 'headerSelector'  => SELF::$header_selector, 
+                    SELF::KEY . 'topSpacer'       => SELF::$top_spacer, 
+                    SELF::KEY . 'options'         => SELF::$options,
                 )
             );
         }
@@ -354,8 +410,8 @@ class WABS
      * @return  void
      */
     public function admin_enqueue_styles ( $hook = '' ) {
-        wp_register_style( self::PLUGIN . '-admin', esc_url( self::$plugin_url ) . '/css/' . self::PLUGIN . '-admin.css', array(), self::$version );
-        wp_enqueue_style(  self::PLUGIN . '-admin' );
+        wp_register_style( SELF::PLUGIN . '-admin', esc_url( SELF::$plugin_url ) . '/css/' . SELF::PLUGIN . '-admin.css', array(), SELF::$version );
+        wp_enqueue_style(  SELF::PLUGIN . '-admin' );
     } // End admin_enqueue_styles ()
 
     /**
@@ -365,8 +421,8 @@ class WABS
      * @return  void
      */
     public function admin_enqueue_scripts ( $hook = '' ) {
-        wp_register_script( self::PLUGIN . '-admin', esc_url( self::$plugin_url ) . '/js/' . self::PLUGIN . '-admin.js', array( 'jquery' ), self::$version );
-        wp_enqueue_script(  self::PLUGIN . '-admin' );
+        wp_register_script( SELF::PLUGIN . '-admin', esc_url( SELF::$plugin_url ) . '/js/' . SELF::PLUGIN . '-admin.js', array( 'jquery' ), SELF::$version );
+        wp_enqueue_script(  SELF::PLUGIN . '-admin' );
     } // End admin_enqueue_scripts ()
 
     /**
@@ -376,7 +432,7 @@ class WABS
      * @return  void
      */
     public function load_localisation () {
-        load_plugin_textdomain( self::PLUGIN, false, dirname( plugin_basename( self::$file ) ) . '/lang/' );
+        load_plugin_textdomain( SELF::PLUGIN, false, dirname( plugin_basename( SELF::$file ) ) . '/lang/' );
     } // End load_localisation ()
 
     /**
@@ -386,12 +442,12 @@ class WABS
      * @return  void
      */
     public function load_plugin_textdomain () {
-        $domain = self::PLUGIN;
+        $domain = SELF::PLUGIN;
 
         $locale = apply_filters( 'plugin_locale', get_locale(), $domain );
 
         load_textdomain( $domain, WP_LANG_DIR . '/' . $domain . '/' . $domain . '-' . $locale . '.mo' );
-        load_plugin_textdomain( $domain, false, dirname( plugin_basename( self::$file ) ) . '/lang/' );
+        load_plugin_textdomain( $domain, false, dirname( plugin_basename( SELF::$file ) ) . '/lang/' );
     } // End load_plugin_textdomain ()
 
     /**
@@ -405,10 +461,10 @@ class WABS
      * @return Main WABS instance
      */
     public static function instance ( $file = '', $version = '1.0.0' ) {
-        if ( is_null( self::$_instance ) ) {
-            self::$_instance = new self( $file, $version );
+        if ( is_null( SELF::$_instance ) ) {
+            SELF::$_instance = new self( $file, $version );
         }
-        return self::$_instance;
+        return SELF::$_instance;
     } // End instance ()
 
     /**
@@ -417,7 +473,7 @@ class WABS
      * @since 1.0.0
      */
     public function __clone () {
-        _doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?' ), self::$version );
+        _doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?' ), SELF::$version );
     } // End __clone ()
 
     /**
@@ -426,7 +482,7 @@ class WABS
      * @since 1.0.0
      */
     public function __wakeup () {
-        _doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?' ), self::$version );
+        _doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?' ), SELF::$version );
     } // End __wakeup ()
 
     /**
@@ -446,7 +502,7 @@ class WABS
      * @return  void
      */
     private function _log_version_number () {
-        update_option( self::KEY . 'version', self::$version );
+        update_option( SELF::KEY . 'version', SELF::$version );
     } // End _log_version_number ()
 
 }

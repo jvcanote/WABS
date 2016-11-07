@@ -15,7 +15,7 @@
  *               Jacob Vega Canote (@jacob / WEBDOGS.COM)
  *               Damian Ruiz (@damian / WEBDOGS.COM)
  *
- * Version:      1.0.0
+ * Version:      1.0.1
  *
  * Text Domain:  woof-action-bar-scheduler
  * Domain Path:  /languages/
@@ -69,7 +69,7 @@ require_once WABS_PATH . '/includes/lib/wabs-fields.php';
  * @return object WABS
  */
 function WABS () {
-	$instance = WABS::instance( __FILE__, '1.0.0' ); 	// if ( is_null( $instance->settings ) ) { $instance->settings = WABS_Settings::instance( $instance ); }
+	$instance = WABS::instance( __FILE__, '1.0.1' ); 	// if ( is_null( $instance->settings ) ) { $instance->settings = WABS_Settings::instance( $instance ); }
 	return $instance;
 }
 WABS();
