@@ -193,7 +193,7 @@ class WABS
             'global'            =>  'n',
             'scheduled'         =>  'n',
             'start_date'        =>  '0',
-            'end_date'          =>  current_time('timestamp') + DAY_IN_SECONDS,
+            'end_date'          =>  (int) current_time('timestamp') + DAY_IN_SECONDS,
             'cta_class'         =>  'without_cta',
             'target'            =>  '_self',
             'link'              =>  NULL,
@@ -216,9 +216,9 @@ class WABS
 
         $has_cta = ( trim( $WABS['link'] ) && trim( $WABS['button_text'] ) );
 
-        $in_range = SELF::_check_in_range( $WABS['start_date'], $WABS['end_date'], current_time('timestamp') );
+        $in_range = SELF::_check_in_range( (int) $WABS['start_date'], (int) $WABS['end_date'], (int) current_time('timestamp') );
         
-        $scheduled = bool_from_yn( $WABS['scheduled'] );
+        $scheduled = ( (bool) $WABS['scheduled'] && (bool) $in_range );
         
         $unique_id = sprintf( "%s_post_%d", esc_attr( $WABS['unique_id'] ), $post_id );
 
@@ -226,7 +226,7 @@ class WABS
         
         if( SELF::_get_brightness( $WABS['background_color'] ) > 130 ) { $WABS['action_color'] = '#000000'; } else { $WABS['action_color'] = '#FFFFFF'; }
         
-        if( ( $WABS['active'] && ! $scheduled ) || ( $WABS['active'] && $scheduled && $in_range ) ) {
+        if( $WABS['active'] || $scheduled ) {
            
             $html = '<div id=\'%1$s%2$s\' class=\'%1$sbar %1$s%3$s %1$s%9$s\' style=\'position:absolute;transform:translate(0px,-100%%);\'> <div class=\'%1$scontainer\'> <div class=\'%1$scol-0\'>&nbsp;</div> <div class=\'%1$sinner %1$scol-1\'> <div class=\'%1$smessage\'> <p> %4$s </p> </div> <div class=\'%1$scta\'> <a class=\'%1$sbutton\' href=\'%5$s\' target=\'%6$s\'>%7$s</a> </div> </div> <div class=\'%1$scol-2\'> <a href=\'javascript:void(0);\' id=\'%1$sclose_bar_%2$s\' class=\'%1$sclose_bar\'> %8$s </a> </div> </div> </div>';
             $output = sprintf( $html, SELF::TOKEN, esc_attr( $unique_id ), esc_attr( $WABS['cta_class'] ), SELF::_sanitize_js( $WABS['message'] ), esc_url( $WABS['link'] ), esc_attr( $WABS['target'] ), SELF::_sanitize_js( $WABS['button_text'] ), SELF::_action_symbol_js( $WABS['action_symbol'] ), sanitize_html_class( $WABS['action_symbol'], "none" ) );
@@ -385,8 +385,9 @@ class WABS
                     SELF::KEY . 'message'         => SELF::$message,
                     SELF::KEY . 'uniqueID'        => SELF::$unique_id, 
                     SELF::KEY . 'scheduled'       => SELF::$scheduled, 
-                    SELF::KEY . 'startDate'       => SELF::$start_date, 
+                    SELF::KEY . 'startDate'       => SELF::$start_date,
                     SELF::KEY . 'endDate'         => SELF::$end_date, 
+                    SELF::KEY . 'nowDate'         => current_time('timestamp'), 
                     SELF::KEY . 'ctaClass'        => SELF::$cta_class, 
                     SELF::KEY . 'link'            => SELF::$link, 
                     SELF::KEY . 'target'          => SELF::$target, 
