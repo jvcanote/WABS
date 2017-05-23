@@ -113,7 +113,13 @@ class WABS
     protected static $top_spacer = "";
     protected static $options = array();
 
-    private static $_active = null;
+    private static   $_active = null;
+    private static  $_scripts = array(  'jquery', 
+                                        'jquery-ui-core', 
+                                        'jquery-effects-bounce', 
+                                        'jquery-touch-punch', 
+                                        'hoverIntent', 
+                                        'html5shiv' );
     private static $_defaults = array(  'behavior'      => 'toggle',
                                         'zIndex'        => 100,
                                         'speedIn'       => 600,
@@ -371,7 +377,9 @@ class WABS
         // should we filter here?
         if( SELF::$_active ) {
 
-            wp_enqueue_script( 'jquery-effects-core' );
+            foreach (SELF::$_scripts as $script ) {
+                wp_enqueue_script( $script );
+            }
             wp_enqueue_script( 'jquery-transit',  esc_url( SELF::$plugin_url ) . '/js/jquery.transit.min.js', array( 'jquery' ), SELF::$version, true );
             
             wp_register_script( SELF::PLUGIN . '-frontend', esc_url( SELF::$plugin_url ) . '/js/jquery.' . SELF::PLUGIN . '.js', array( 'jquery' ), SELF::$version, true );
