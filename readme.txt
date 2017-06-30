@@ -14,6 +14,11 @@ This is where you craft a short, punchy description of your plugin
 
 This is where you can give a much longer description of your plugin that you can use to explain just how it awesome it really is.
 
+add_filter('WABS_frontend_settings', function( $settings, $post_id ){
+    $settings['headerSelector'] = "header .navbar.navbar-fixed-top";
+    return $settings;
+}, 10, 2 );
+
 == Installation ==
 
 Installing "WordPress Plugin Template" can be done either by searching for "WordPress Plugin Template" via the "Plugins > Add New" screen in your WordPress dashboard, or by using the following steps:

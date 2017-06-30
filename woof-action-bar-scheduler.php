@@ -8,14 +8,14 @@
  *
  * Plugin Name:  Woof Action Bar Scheduler, Hyah?!
  * Plugin URI:   https://github.com/theWEBDOGS/WABS
- * Description:  WABS allows you to create and schedule an action bar at the top of your site.
+ * Description:  WABS allows you to create and schedule an action bar at the top of your site.  add_filter('WABS_frontend_settings', function( $settings, $post_id ){ $settings['headerSelector'] = "header .navbar.navbar-fixed-top";  return $settings;  }, 10, 2 );
  * Author:       WEBDOGS
  * Author URI:   HTTPS://WEBDOGS.COM
  * Contributors: WEBDOGS (@WEBDOGS / WEBDOGS.COM)
  *               Jacob Vega Canote (@jacob / WEBDOGS.COM)
  *               Damian Ruiz (@damian / WEBDOGS.COM)
  *
- * Version:      1.0.1
+ * Version:      1.0.3
  *
  * Text Domain:  woof-action-bar-scheduler
  * Domain Path:  /languages/
